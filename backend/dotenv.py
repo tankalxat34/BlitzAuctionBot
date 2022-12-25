@@ -1,5 +1,7 @@
 """
-Парсинг .env
+Парсер файла `.env`
+
+(c) tankalxat34 - 2022
 """
 import os
 import pathlib
@@ -9,28 +11,18 @@ def removeSpaces(string: str) -> str:
     return string.strip()
 
 
-def config(path: str = pathlib.Path(os.getcwd(), ".env")) -> None:
-    """Загружает все переменные из .env в глобальную область видимости"""
-    with open(path, "r", encoding="UTF-8") as file:
-        content = [value.split("#")[0].strip() for value in [value for value in [value for value in set(map(removeSpaces, file.readlines())) if value] if value[0] != "#"]]
-    
-    for line in content:
-        exec(f"global {line.split('=')[0]}\n{line}")
-
-    return True
-
-
 class DotEnv:
-    def __init__(self, path: str = pathlib.Path(os.getcwd(), ".env")) -> None:
-        self.path = path
-
+    def __init__(self, path: str = pathlib.Path(os.getcwd(), ".env")):
+        """
+        Класс для работы с файлом `.env`
+        
+        :param path - путь к файлу `.env`
+        """
         with open(path, "r", encoding="UTF-8") as file:
-            self.lines = [value.split("#")[0].strip() for value in [value for value in [value for value in set(map(removeSpaces, file.readlines())) if value] if value[0] != "#"]]
+            lines = [value.split("#")[0].strip() for value in [value for value in [value for value in set(map(removeSpaces, file.readlines())) if value] if value[0] != "#"]]
 
-        self.dictionary = dict()
-
-        for line in self.lines:
-            self.dictionary[line.split("=")[0]] = line.split("=")[1]
+        for line in lines:
+            # создание атрибутов для экземпляра класса
             self[line.split("=")[0]] = line.split("=")[1].replace('"', '')
 
     def __setitem__(self, key, value):
@@ -38,13 +30,12 @@ class DotEnv:
 
     def __getitem__(self, key):
         return getattr(self, key)
-
+    
     def __str__(self) -> str:
-        return f"DotEnv({self.dictionary})"
+        return f"DotEnv({self.__dict__})"
+
 
 if __name__ == "__main__":
     _env = DotEnv()
     print(_env)
     print(_env.TOKEN)
-    print(_env.VAR_INT)
-
