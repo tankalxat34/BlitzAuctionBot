@@ -10,6 +10,7 @@ from telebot import types
 import json
 
 from backend import auction, dotenv, strings
+import keyboards
 
 _env = dotenv.DotEnv()
 bot = telebot.TeleBot(_env.TOKEN)
@@ -30,10 +31,15 @@ def all_messages(message):
     username = message.from_user.username
 
     if command in messages["commands"].keys():
-        bot.send_message(user_id, strings.replaceAll(messages["commands"][command], {"%username%": username, "%time%": time.strftime("%d.%m.20%y %H:%M:%S")}), _env.PARSE_MODE)
+        bot.send_message(user_id, strings.replaceAll(messages["commands"][command], {"%username%": username, "%time%": time.strftime("%d.%m.20%y %H:%M:%S")}), _env.PARSE_MODE, reply_markup=keyboards.KB_GET_AUCTION)
 
         if command == "stat":
-            bot.send_message(user_id, auction.str_available(), _env.PARSE_MODE)
+            bot.send_message(user_id, auction.str_available(), _env.PARSE_MODE, reply_markup=keyboards.KB_OPEN_AUCTION)
+    
+
+    if text.lower() == "показать аукцион":
+        bot.send_message(user_id, auction.str_available(), _env.PARSE_MODE, reply_markup=keyboards.KB_OPEN_AUCTION)
+
 
 
 

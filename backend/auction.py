@@ -31,7 +31,7 @@ def humanizeTimeDiff(time1: int, time2: int) -> str:
 
 class Auction:
     def __init__(self) -> None:
-        self.url_api = "https://tanksblitz.ru/ru/api/events/items/auction/?page_size=50&type[]=vehicle&saleable=true"
+        self.url_api = "https://tanksblitz.ru/ru/api/events/items/auction/?page_size=99&type[]=vehicle&saleable=true"
         self.url_user = "https://tanksblitz.ru/ru/auction/"
 
     def get(self) -> dict:
@@ -39,12 +39,48 @@ class Auction:
         return self.response.json()
     
     def str_available(self) -> str:
+        """
+        Возвращает в строке информацию о продаваемой технике
+        """
+        res = self.get()
+        results = res["results"]
+
+        # сбор статистики по технике
+        statistic_tanks = dict()
+        for tank in results:
+            if tank["available"]:
+                try:
+                    statistic_tanks["all_available_count"] += 1
+                except Exception:
+                    statistic_tanks["all_available_count"] = 1
+                
+                try:
+                    statistic_tanks["average_price"] += tank["price"]["value"]
+                except Exception:
+                    statistic_tanks["average_price"] = tank["price"]["value"]
+
+                if tank["entity"]["is_premium"] and tank["entity"]["is_collectible"] == False:
+                    try:
+                        statistic_tanks["count_premium"] += 1
+                    except Exception:
+                        statistic_tanks["count_premium"] = 1
+
+                if tank["entity"]["is_collectible"]:
+                    try:
+                        statistic_tanks["count_collectible"] += 1
+                    except Exception:
+                        statistic_tanks["count_collectible"] = 1
+
         msg = ""
-        results = self.get()["results"]
+        msg += f"💰Продается танков: {statistic_tanks['all_available_count']}\n" + \
+               f"    Премиум танки: {statistic_tanks['count_premium']}\n" + \
+               f"    Коллекционные танки: {statistic_tanks['count_collectible']}\n" + \
+               f"    Средняя цена танка: {round(statistic_tanks['average_price'] / statistic_tanks['all_available_count'], 2)}\n" + \
+                "\n"
 
         for tank in results:
             if tank["available"]:
-                msg += (f'• *{tank["entity"]["user_string"]}* ({MASKS[tank["entity"]["type_slug"]]}-{tank["entity"]["level"]})\n    Танков осталось: *{tank["current_count"]}*/{tank["initial_count"]}\n    Цена сейчас: _{tank["price"]["value"]} {MASKS[tank["price"]["currency"]["title"].lower()]}_\n    Следующая цена: _{tank["next_price"]["value"]} {MASKS[tank["next_price"]["currency"]["title"].lower()]}_\n    Цена упадет {datetime.fromtimestamp(tank["next_price_timestamp"])} (через {humanizeTimeDiff(datetime.timestamp(datetime.now()), tank["next_price_timestamp"])})\n    Будет выведен из продажи {tank["available_before"]}') + "\n\n"
+                msg += (f'• *{tank["entity"]["user_string"]}* ({MASKS[tank["entity"]["type_slug"]]}-{tank["entity"]["level"]} {MASKS[tank["entity"]["nation"]]}{" коллекционный" if tank["entity"]["is_collectible"] else ""}{" прем" if tank["entity"]["is_premium"] and tank["entity"]["is_collectible"] == False else ""})\n    Танков осталось: *{tank["current_count"]}*/{tank["initial_count"]}\n    Цена сейчас: _{tank["price"]["value"]} {MASKS[tank["price"]["currency"]["title"].lower()]}_\n    Следующая цена: _{tank["next_price"]["value"]} {MASKS[tank["next_price"]["currency"]["title"].lower()]}_ (через {humanizeTimeDiff(datetime.timestamp(datetime.now()), tank["next_price_timestamp"])})\n    Цена упадет {datetime.fromtimestamp(tank["next_price_timestamp"])}\n    Будет выведен из продажи {tank["available_before"]}') + "\n\n"
 
         return msg
 
