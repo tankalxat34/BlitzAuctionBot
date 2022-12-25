@@ -5,10 +5,11 @@
 """
 
 import telebot
+import time
 from telebot import types
 import json
 
-from backend import dotenv, strings
+from backend import auction, dotenv, strings
 
 _env = dotenv.DotEnv()
 bot = telebot.TeleBot(_env.TOKEN)
@@ -16,6 +17,8 @@ bot = telebot.TeleBot(_env.TOKEN)
 
 with open("messages.json", "r", encoding="UTF-8") as file:
     messages = json.load(file)
+
+auction = auction.Auction()
 
 
 @bot.message_handler(content_types="text")
@@ -27,7 +30,11 @@ def all_messages(message):
     username = message.from_user.username
 
     if command in messages["commands"].keys():
-        bot.send_message(user_id, strings.replaceAll(messages["commands"][command], {"%username%": username}), _env.PARSE_MODE)
+        bot.send_message(user_id, strings.replaceAll(messages["commands"][command], {"%username%": username, "%time%": time.strftime("%d.%m.20%y %H:%M:%S")}), _env.PARSE_MODE)
+
+        if command == "stat":
+            bot.send_message(user_id, auction.str_available(), _env.PARSE_MODE)
+
 
 
 print("Bot has beed started successfully!")
