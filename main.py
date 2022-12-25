@@ -16,29 +16,32 @@ _env = dotenv.DotEnv()
 bot = telebot.TeleBot(_env.TOKEN)
 
 
-with open("messages.json", "r", encoding="UTF-8") as file:
-    messages = json.load(file)
+with open("MESSAGES.json", "r", encoding="UTF-8") as file:
+    MESSAGES = json.load(file)
 
 auction = auction.Auction()
 
 
 @bot.message_handler(content_types="text")
-def all_messages(message):
+def all_MESSAGES(message):
     """Обработка всех входяих текстовых сообщений от пользователя"""
     user_id = message.from_user.id
     text = message.text
     command = message.text.lower()[1:]
     username = message.from_user.username
 
-    if command in messages["commands"].keys():
-        bot.send_message(user_id, strings.replaceAll(messages["commands"][command], {"%username%": username, "%time%": time.strftime("%d.%m.20%y %H:%M:%S")}), _env.PARSE_MODE, reply_markup=keyboards.KB_GET_AUCTION)
+    if command in MESSAGES["commands"].keys():
+        try:
+            bot.send_message(user_id, strings.replaceAll(MESSAGES["commands"][command], {"%username%": username, "%time%": time.strftime("%d.%m.20%y %H:%M:%S")}), _env.PARSE_MODE, reply_markup=keyboards.KB_GET_AUCTION)
+        except Exception:
+            pass
 
-        if command == "stat":
+
+    if text.lower() == "показать аукцион" or command == "stat":
+        try:
             bot.send_message(user_id, auction.str_available(), _env.PARSE_MODE, reply_markup=keyboards.KB_OPEN_AUCTION)
-    
-
-    if text.lower() == "показать аукцион":
-        bot.send_message(user_id, auction.str_available(), _env.PARSE_MODE, reply_markup=keyboards.KB_OPEN_AUCTION)
+        except Exception:
+            bot.send_message(user_id, MESSAGES["texts"]["_error"], _env.PARSE_MODE)
 
 
 
