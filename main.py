@@ -6,7 +6,6 @@
 
 import telebot
 import time
-from telebot import types
 import json
 
 from backend import auction, dotenv, strings
